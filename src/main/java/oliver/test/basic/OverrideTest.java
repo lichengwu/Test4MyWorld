@@ -20,6 +20,15 @@ public class OverrideTest {
 	class A {
 		int i = 0;
 		
+		public A(){
+			i=1;
+			System.out.println(getValue());
+		}
+		
+		public int getValue(){
+			return i;
+		}
+		
 		public void methodA(){
 			System.out.println("A.methodA()");
 		}
@@ -47,6 +56,20 @@ public class OverrideTest {
 	class B extends A {
 		int i = 1;
 		
+		int j;
+		
+		public B (){
+			j=2;
+		}
+		
+		/**
+		 * @see oliver.test.basic.OverrideTest.A#getValue()
+		 */
+		@Override
+		public int getValue() {
+		    return j;
+		}
+		
 		@Override
 		public void methodA() {
 		    System.out.println("B.methodA()");
@@ -65,6 +88,12 @@ public class OverrideTest {
 		
 		a.m(b);
 		b.m(a);
+	}
+	
+	@Test
+	public void initTest(){
+		@SuppressWarnings("unused")
+        B b = new OverrideTest().new B();
 	}
 
 }
