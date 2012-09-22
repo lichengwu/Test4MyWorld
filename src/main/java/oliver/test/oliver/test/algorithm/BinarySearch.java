@@ -15,7 +15,7 @@ public class BinarySearch {
      */
     @Test
     public void findTwiceTest() {
-        int[] array = {1, 2, 2, 2, 2, 2, 3, 4, 4, 5, 6, 7, 7, 7, 8, 9, 10};
+        int[] array = {1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 10, 11};
 
         int begin = 0;
         int end = array.length - 1;
@@ -31,10 +31,11 @@ public class BinarySearch {
      * @param end   end index
      */
     private void findTwice(int[] array, int begin, int end) {
-        int mid = (begin + end) / 2 + 1;
-        if (array[mid] == mid) {
-            System.out.println(mid);
-        } else if (array[mid] < mid) {
+        int mid = (begin + end) / 2;
+        int midValue = array[0] + mid;
+        if (begin + 1 == end) {
+            System.out.println(midValue);
+        } else if (array[mid] < midValue) {
             end = mid;
             findTwice(array, begin, end);
         } else {
