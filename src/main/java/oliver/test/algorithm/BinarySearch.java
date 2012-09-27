@@ -1,4 +1,4 @@
-package oliver.test.oliver.test.algorithm;
+package oliver.test.algorithm;
 
 import org.junit.Test;
 
