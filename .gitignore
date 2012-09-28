@@ -7,5 +7,5 @@ target
 src/main/webapp/WEB-INF/classes
 logs
 .fatjar
-test.iml
+Test4MyWorld.iml
 .idea/*
