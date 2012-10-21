@@ -89,4 +89,51 @@ public class IndexingTest {
         reader.close();
     }
 
+    @Test
+    public void testDeleteBeforeOptimize() throws IOException {
+        IndexWriter writer = getWriter();
+        Assert.assertEquals(2, writer.numDocs());
+        writer.deleteDocuments(new Term("id", "1"));
+        writer.commit();
+        Assert.assertTrue(writer.hasDeletions());
+        Assert.assertEquals(2, writer.maxDoc());
+        Assert.assertEquals(1, writer.numDocs());
+        writer.close();
+    }
+
+    @Test
+    public void testDeleteAfterOptimize() throws IOException {
+        IndexWriter writer = getWriter();
+        Assert.assertEquals(2, writer.numDocs());
+        writer.deleteDocuments(new Term("id", "1"));
+        writer.commit();
+        writer.optimize();
+        boolean condition = writer.hasDeletions();
+        Assert.assertFalse(condition);
+        Assert.assertEquals(1, writer.numDocs());
+        Assert.assertEquals(1, writer.maxDoc());
+        writer.close();
+
+    }
+
+    @Test
+    public void testUpdate() throws IOException {
+        Assert.assertEquals(1, getHitCount("city", "Amsterdam"));
+
+        IndexWriter writer = getWriter();
+        Document document = new Document();
+        document.add(new Field("id", "1", Field.Store.YES, Field.Index.NOT_ANALYZED));
+        document.add(new Field("country", "Netherlands", Field.Store.YES, Field.Index.NO));
+        document.add(new Field("contents", "Den Haag has a lot of museums", Field.Store.NO,
+                Field.Index.ANALYZED));
+        document.add(new Field("city", "DenHaag", Field.Store.YES, Field.Index.ANALYZED));
+
+        writer.updateDocument(new Term("id", "1"), document);
+        writer.close();
+
+        Assert.assertEquals(0, getHitCount("city", "Amsterdam"));
+        Assert.assertEquals(1, getHitCount("city", "DenHaag"));
+
+    }
+
 }
