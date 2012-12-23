@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * do not use build-in lock
  * 
- * if an class use build-in lock ensure concurrence access it's field, thread
+ * if a class use build-in lock ensure concurrence access it's field, thread
  * will be blocked by other threads who had acquired the lock.
  * 
  * @author lichengwu
@@ -39,13 +39,13 @@ public class DoNotUseBuildInLockTest {
 
         // the other start and call get() method, but the build-in lock
         // had been hold by the thread above.
-        // get() method must waite for the build-in lock.
+        // get() method must wait for the build-in lock.
         new Thread(new Runnable() {
             @Override
             public void run() {
                 long begin = System.currentTimeMillis();
                 object.get();
-                System.out.println("get() method waite :" + (System.currentTimeMillis() - begin)
+                System.out.println("get() method wait :" + (System.currentTimeMillis() - begin)
                         + "ms");
             }
         }).start();
