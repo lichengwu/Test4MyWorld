@@ -1,11 +1,13 @@
 package oliver.test.conurrency;
 
 import java.util.Random;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.junit.Test;
 
 /**
- * a deallock test
+ * a deadlock test
  * 
  * @author lichengwu
  * @version 1.0
@@ -13,11 +15,11 @@ import org.junit.Test;
  */
 public class DemonstrateDealLock {
 
-    private static final int NUM_THREADS = 20;
+    private static final int NUM_THREADS = 1;
 
     private static final int NUM_ACCOUNTS = 5;
 
-    private static final int NUM_ITERATIONS = 1000000;
+    private static final int NUM_ITERATIONS = 1;
 
     private static final Object lock = new Object();
 
@@ -50,7 +52,9 @@ public class DemonstrateDealLock {
             new TransferThread().start();
         }
 
+        Thread.currentThread().isInterrupted();
         Thread.currentThread().join();
+        System.out.println("end");
     }
 
     public static void transferMoney(final Account from, final Account to, final Integer amount) {
@@ -85,9 +89,77 @@ public class DemonstrateDealLock {
         }
     }
 
+    public static void transferMoney2(final Account from, final Account to, final Integer amount) {
+        class Helper {
+            public void transfer() {
+                from.debit(amount);
+                to.credit(amount);
+            }
+        }
+        int fromHash = System.identityHashCode(from);
+        int toHash = System.identityHashCode(to);
+        if (fromHash < toHash) {
+            while (true) {
+                if (from.lock.tryLock()) {
+                    try {
+                        if (to.lock.tryLock()) {
+                            try {
+                                new Helper().transfer();
+                                return;
+                            } finally {
+                                to.lock.unlock();
+                            }
+                        }
+                    } finally {
+                        from.lock.unlock();
+                    }
+                }
+            }
+        } else if (fromHash > toHash) {
+
+            while (true) {
+
+                if (to.lock.tryLock()) {
+                    try {
+                        if (from.lock.tryLock()) {
+                            try {
+                                new Helper().transfer();
+                                return;
+                            } finally {
+                                from.lock.unlock();
+                            }
+                        }
+                    } finally {
+                        to.lock.unlock();
+                    }
+                }
+            }
+
+        } else {
+            while (true) {
+                if (from.lock.tryLock()) {
+                    try {
+                        if (to.lock.tryLock()) {
+                            try {
+                                new Helper().transfer();
+                                return;
+                            } finally {
+                                to.lock.unlock();
+                            }
+                        }
+                    } finally {
+                        from.lock.unlock();
+                    }
+                }
+            }
+        }
+    }
+
     static class Account {
 
         private Integer id;
+
+        private Lock lock = new ReentrantLock();
 
         public void debit(Integer amount) {
             System.out.println("account " + id + " debit : " + amount);
