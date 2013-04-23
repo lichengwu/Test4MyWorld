@@ -11,6 +11,7 @@ import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -26,7 +27,7 @@ public class GetTopN extends BaseTest {
 
     static int SIZE = 10000000;
 
-    static int TOP_N = 10;
+    static int TOP_N = 100;
 
     static long[] TOP_N_RESULT;
 
@@ -76,8 +77,15 @@ public class GetTopN extends BaseTest {
         System.out.println("finish init class, time used : " + (System.currentTimeMillis() - current) + "ms");
     }
 
-
-    public static Integer[] getTopN(int[] nums, int topN) {
+    /**
+     * get top n bit map implement
+     *
+     * @param array
+     * @param topN
+     *
+     * @return
+     */
+    public static Integer[] getTopN(int[] array, int topN) {
 
         final int bitWidth = 32;
 
@@ -88,30 +96,30 @@ public class GetTopN extends BaseTest {
         // top n for result
         Integer[] top = new Integer[topN];
 
-        //byte[] bitMap = new byte[nums.length];
+        //byte[] bitMap = new byte[array.length];
 
         long[] bitMap = new long[1 + Integer.MAX_VALUE / bitWidth];
 
-//        long bitMap = 0;
+        //long bitMap = 0;
 
         int max = Integer.MIN_VALUE;
-        for (int i = 0; i < nums.length /*&& iCount < topN*/; i++) {
-            //int flag = bitMap[nums[i].intValue()];
-//            int mask = 1 << nums[i];
+        for (int i = 0; i < array.length /*&& iCount < topN*/; i++) {
+            //int flag = bitMap[array[i].intValue()];
+//            int mask = 1 << array[i];
 //            if ((bitMap & mask) == 0) {
 //                bitMap = bitMap | mask;
 //                iCount++;
 //            }
-            if (max < nums[i]) {
-                max = nums[i];
+            if (max < array[i]) {
+                max = array[i];
             }
-            bitMap[nums[i] >> SHIFT] |= (1 << (i & MASK));
+            bitMap[array[i] >> SHIFT] |= (1 << (i & MASK));
         }
 
         int index = 0;
 
         for (int i = max; index < topN; i--) {
-            if ((bitMap[nums[i] >> SHIFT] & (1 << (i & MASK))) == 1) {
+            if ((bitMap[array[i] >> SHIFT] & (1 << (i & MASK))) == 1) {
                 top[index] = i;
                 index++;
             }
@@ -126,12 +134,13 @@ public class GetTopN extends BaseTest {
 
 
     /**
-     * get top n number from the given data
+     * get top n number from the given data(single thread)
      *
      * @param data
      * @param topN
+     *
      * @return
-     * @author licheng
+     * @author lichengwu
      */
     public static long[] getTopN1(long[] data, int topN) {
         long[] top = new long[topN];
@@ -139,8 +148,8 @@ public class GetTopN extends BaseTest {
         for (int i = 0; i < topN; i++) {
             top[i] = Long.MIN_VALUE;
         }
-        // log max,min value in top
-        long max, min = Long.MIN_VALUE;
+        // log min value in top
+        long min = Long.MIN_VALUE;
 
         for (int i = 0; i < data.length; i++) {
             // skip elements less than top's min element
@@ -158,7 +167,7 @@ public class GetTopN extends BaseTest {
                         tmp = current;
                     }
                 }
-                // cache max,min value in top
+                // cache min value in top
                 min = top[0];
                 //max = top[topN - 1];
             }
@@ -166,17 +175,27 @@ public class GetTopN extends BaseTest {
         return top;
     }
 
-    public static long[] getTopN2(final long[] data, final int topN) {
 
-        final long[] top = new long[topN];
+    /**
+     * multi-thread  version of {#getTop1}
+     *
+     * @param array
+     * @param topN
+     *
+     * @return
+     * @author lichengwu
+     */
+    public long[] getTopN2(final long[] array, final int topN) {
 
-        // set top items Long.MIN_VALUE
+        final long[] top = new long[TOP_N];
+
+        // set top items to Long.MIN_VALUE
         for (int i = 0; i < topN; i++) {
             top[i] = Long.MIN_VALUE;
         }
         final ReentrantLock lock = new ReentrantLock(false);
 
-        // max thread 4 running task
+        // full speed
         int nThreads = Runtime.getRuntime().availableProcessors() + 1;
 
         ExecutorService exec = Executors.newFixedThreadPool(nThreads);
@@ -195,34 +214,43 @@ public class GetTopN extends BaseTest {
             public void run() {
                 // log max,min value in top
                 long min;
-                lock.lock();
-                try{
-                    min = top[0];
-                } finally {
-                    lock.unlock();
-                }
+                //lock.lock();
+                //try {
+                min = top[0];
+                //} finally {
+                //    lock.unlock();
+                //}
 
                 for (int i = beginIndex; i < endIndex; i++) {
                     // skip elements less than top's min element
-                    if (data[i] <= min) {
+                    if (array[i] <= min) {
                         continue;
                     } else {
-                        long tmp = data[i];
+                        long tmp = array[i];
                         lock.lock();
                         try {
                             for (int k = top.length - 1; k >= 0; k--) {
+                                long current = top[k];
                                 // skip equal elements
-                                if (top[k] == tmp) {
+                                if (tmp == current) {
                                     break;
-                                } else if (tmp > top[k]) { // insert new value to top
-                                    long current = top[k];
+                                } else if (tmp > current) { // insert new value to top
+                                    // lock.lock();
+                                    // try {
+                                    // double check locking
+                                    //  if (tmp > top[k]) {
                                     top[k] = tmp;
                                     tmp = current;
+                                    //    min = top[0];
+                                    // }
+                                    //} finally {
+                                    //lock.unlock();
+                                    // }
+
                                 }
                             }
                             // cache max,min value in top
                             min = top[0];
-                            //max = top[topN - 1];
                         } finally {
                             lock.unlock();
                         }
@@ -231,16 +259,21 @@ public class GetTopN extends BaseTest {
             }
         }
 
-        int sub = data.length / nThreads;
+        int sub = array.length / nThreads;
 
         for (int i = 0; i < nThreads; i++) {
             if (i == nThreads - 1) {
-                exec.execute(new GetTopTask(i * sub, data.length));
+                exec.execute(new GetTopTask(i * sub, array.length));
             } else {
                 exec.execute(new GetTopTask(i * sub, (i + 1) * sub));
             }
         }
         exec.shutdown();
+        try {
+            exec.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         return top;
     }
 
@@ -253,12 +286,18 @@ public class GetTopN extends BaseTest {
 
 
     @Test
-    @Repeat(1)
+    @Repeat(500)
     public void testGetTopN2() {
-        System.out.println(deepToString(getTopN2(new long[]{
-                1L, 121L, -1L, 99L, 12L}, 3)));
-        //Assert.assertArrayEquals(getTopN2(DATA, TOP_N), TOP_N_RESULT);
+        //System.out.println(deepToString(getTopN2(new long[]{1L, 121L, -1L, 99L, 12L}, 3)));
+        Assert.assertArrayEquals(getTopN2(DATA, TOP_N), TOP_N_RESULT);
     }
+
+//    @Test
+//    @Repeat(500)
+//    public void testMultiTopN() {
+//        MultiTopN top = new MultiTopN(DATA, TOP_N);
+//        Assert.assertArrayEquals(top.calculate(), TOP_N_RESULT);
+//    }
 
     @Test
     public void test() {
