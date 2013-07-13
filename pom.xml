@@ -2,12 +2,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>oliver</groupId>
+    <groupId>cn.lichengwu</groupId>
     <artifactId>test</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-
-    <name>Test4MyWorld</name>
+    <name>test</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -16,9 +15,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>cn.gunct</groupId>
-            <artifactId>oliver.util</artifactId>
-            <version>1.2.0</version>
+            <groupId>cn.lichengwu</groupId>
+            <artifactId>utils</artifactId>
+            <version>1.3.0-SNAPSHOT</version>
         </dependency>
 
             <dependency>
