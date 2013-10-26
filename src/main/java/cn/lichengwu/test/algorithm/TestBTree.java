@@ -1,10 +1,9 @@
 package cn.lichengwu.test.algorithm;
 
-import lichengwu.lang.Random;
 import cn.lichengwu.test.common.BaseTest;
 import cn.lichengwu.test.common.Repeat;
+import cn.lichengwu.utils.lang.Random;
 import org.junit.Test;
-import org.mapdb.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,8 +33,7 @@ public class TestBTree extends BaseTest {
     }
 
 
-    @Test
-    @Repeat
+    @Test @Repeat
     public void testTreeMap() {
         TreeMap<String, Integer> treeMap = new TreeMap<>();
         for (Map.Entry<String, Integer> entry : STORE_DATA.entrySet()) {
@@ -45,16 +43,16 @@ public class TestBTree extends BaseTest {
     }
 
 
-    @Test
-    public void testMemoryDB() {
-        DB inMemory = new DB(new StoreHeap());
-        Map treeMap = inMemory.createTreeMap("test", 32, false, false, null, null, null);
-        for (Map.Entry<String, Integer> entry : STORE_DATA.entrySet()) {
-            treeMap.put(entry.getKey(), entry.getValue());
-        }
-    }
+    //    @Test
+    //    public void testMemoryDB() {
+    //        DB inMemory = new DB(new StoreHeap());
+    //        Map treeMap = inMemory.createTreeMap("test", 32, false, false, null, null, null);
+    //        for (Map.Entry<String, Integer> entry : STORE_DATA.entrySet()) {
+    //            treeMap.put(entry.getKey(), entry.getValue());
+    //        }
+    //    }
 
-    public void testRemoveFromMapDB(){
+    public void testRemoveFromMapDB() {
 
     }
 
@@ -65,7 +63,6 @@ public class TestBTree extends BaseTest {
             map.put(entry.getKey(), entry.getValue());
         }
     }
-
 
 
 }
