@@ -1,14 +1,12 @@
 package cn.lichengwu.test.btrace;
 
+import com.sun.btrace.AnyType;
 import com.sun.btrace.BTraceUtils;
 import com.sun.btrace.annotations.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static com.sun.btrace.BTraceUtils.*;
-import static com.sun.btrace.BTraceUtils.println;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * show memory info
@@ -27,7 +25,6 @@ public class MemoryInfo {
             clazz = "java.lang.StringBuilder",
             method = "<init>")
     public static void ppp() {
-        count++;
         String str = BTraceUtils.jstackStr(10);
 
         //get start with com.taobao or com.alibaba
@@ -48,33 +45,45 @@ public class MemoryInfo {
             resultMap.put(taobao, _count + 1);
         }
 
-        if (count % 10 == 0) {
-            BTraceUtils.println("==========================count: " + count);
-            //get Map count
-            long _count = 0;
-            for (Map.Entry<String, Long> en : resultMap.entrySet()) {
-                BTraceUtils.println(en.getValue() + "\t" + en.getKey());
-                _count = _count + en.getValue();
-            }
-            BTraceUtils.println("========================== map count: " + _count + "\n");
-
-        }
+//        if (count % 10 == 0) {
+//            BTraceUtils.println("==========================count: " + count);
+//            //get Map count
+//            long _count = 0;
+//            for (Map.Entry<String, Long> en : resultMap.entrySet()) {
+//                BTraceUtils.println(en.getValue() + "\t" + en.getKey());
+//                _count = _count + en.getValue();
+//            }
+//            BTraceUtils.println("========================== map count: " + _count + "\n");
+//
+//        }
 
     }
 
-    private static long count = 0;
-
-
     private volatile static Map<String, Long> resultMap = new ConcurrentHashMap<String, Long>();
 
-    @OnMethod(clazz = "/com\\.taobao\\.trip\\.*/", method = "/.*/")
-    public static void onnew(@ProbeClassName String pcn, @ProbeMethodName String pmn) {
-        String full = pcn + "#" + pmn;
-        if (!resultMap.containsKey(full)) {
-            resultMap.put(full, 1L);
-        } else {
-            resultMap.put(full, resultMap.get(full) + 1);
-        }
+
+    private  static Set<Long> countSet = Collections.newSetFromMap(new ConcurrentHashMap<Long, Boolean>());
+
+
+    @TLS
+    private static AtomicInteger count = new AtomicInteger(0);
+
+    @OnMethod(clazz = "com.taobao.trip.atw.result.PriceMerger", method = "fcy")
+    public static void onnew(@ProbeClassName String pcn, @ProbeMethodName String pmn, AnyType[] args) {
+        long key = (pcn + "." + pmn).hashCode();
+        int s = args != null ? Arrays.hashCode(args) : 0;
+        key = (key << 32) | s;
+
+        countSet.add(key);
+        count.incrementAndGet();
+    }
+
+    @OnTimer(5000)
+    public static void print() {
+        BTraceUtils.print("total:");
+        BTraceUtils.print(count.get());
+        BTraceUtils.print(",real:");
+        BTraceUtils.println(countSet.size());
     }
 
     @TLS
@@ -97,17 +106,6 @@ public class MemoryInfo {
         }
     }
 
-    @OnTimer(5000)
-    public static void print() {
-        BTraceUtils.println("========================================");
-        for (Map.Entry<String, Integer> entry : countMap.entrySet()) {
-            if (entry.getValue() > 100) {
-                BTraceUtils.println(entry.getValue() + "\t\t" + entry.getKey());
-            }
-        }
-        BTraceUtils.println("===========================================");
-
-    }
 
 
     private static Map<String, long[]> callMap = BTraceUtils.newHashMap();
@@ -149,5 +147,6 @@ public class MemoryInfo {
 
         BTraceUtils.println("=====================END======================");
     }
+
 
 }
