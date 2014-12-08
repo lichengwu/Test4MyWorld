@@ -17,7 +17,7 @@ public class Annotation {
     }
 
 
-    public void testMethod(@notnull List<String> list) {
+    public void testMethod(List<String> list) {
         System.out.println(list.size());
     }
 }
