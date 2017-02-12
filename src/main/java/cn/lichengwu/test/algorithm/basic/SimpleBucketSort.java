@@ -1,14 +1,18 @@
 package cn.lichengwu.test.algorithm.basic;
 
+import org.junit.Test;
+
 /**
+ * 桶排序简单版
+ *
  * @author 佐井
  * @since 2017-02-12 15:35
  */
-public class SimpleBucketSort {
+public class SimpleBucketSort extends SortData {
 
 
-    public static void main(String[] args) {
-        int arr[] = {2, 46, 2, 5, 7, 32, 3, 1, 9, 1};
+    @Test
+    public void sort() {
 
         int buf[] = new int[47];
 
